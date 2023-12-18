@@ -29,6 +29,8 @@ workflow {
   }
 
 
+
+  // REFERENCE
   ref_fa = Channel.fromPath("${params.reference_fa}").collect()
   // fai: only index it if it's not already indexed
   if (file("${params.reference_fa}.fai").isEmpty()==false){
@@ -37,6 +39,30 @@ workflow {
   else{
     ref_fai = INDEX_FAI(ref_fa).collect()
   }
+
+  if (file("${params.reference_fa}.fai").isEmpty()==false){
+    ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
+  }
+  else{
+    ref_fai = INDEX_FAI(ref_fa).collect()
+  }
+
+  //bwa index: only create it if it does not already exist
+  if (file("${params.reference_fa}.amb").isEmpty()==false){
+    ref_bwa = ["${params.reference_fa}.amb","${params.reference_fa}.ann","${params.reference_fa}.bwt", \
+               "${params.reference_fa}.pac","${params.reference_fa}.sa"]
+  }
+  else{
+    ref_bwa = INDEX_BWA(ref_fa).collect()
+  }
+
+  if (file("${params.reference_fa}.dict").isEmpty()==false){
+    ref_dict = "${params.reference_fa}.dict"
+  }
+  else{
+    ref_dict = INDEX_DICT(ref_fa).collect()
+  }
+
 
 
   // download data
@@ -91,7 +117,7 @@ workflow {
                   .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai")}
   
   input_ase = input.filter{(it.bam) && (it.bam_RNA)}
-                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai",it,bam_RNA,it.bam_RNA+".bai")}
+                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai",it.bam_RNA,it.bam_RNA+".bai")}
 
   if (params.run_manta_freec){
 
