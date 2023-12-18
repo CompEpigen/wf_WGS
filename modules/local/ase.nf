@@ -24,7 +24,7 @@ process HAPLOTYPECALLER_DNA_CHR {
   label "ase"
   memory = 12.GB
   time = 8.h
-  cpus = 5
+  cpus = 10
   
   input:
     tuple val(meta), path(bam), path(bai), val(chr), path(targets)
