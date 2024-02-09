@@ -37,7 +37,7 @@ for i,chr in enumerate(chromosomes):
 config={"general":{"reference":args.genome,"figure_layout":"horizontal"}}
 config["output"] = {"file":args.o,"dpi":400,"width":180.0}
 config["regions"] = regions
-config["tracks"] = [{"type":"SV","height": 10.0,"margin_above": 0.0,"bounding_box": True,"df_SVs":args.sv},
+config["tracks"] = [{"type":"SV","height": 10.0,"margin_above": 0.0,"bounding_box": True,"vcf":args.sv},
                         {"type":"copynumber","height": 30.0,"margin_above": 0.0,"bounding_box": True,"freec_ratios":args.freec_ratios,
                             "freec_CNAs":args.freec_cnas,"purple_cn":args.purple_cn,"min_cn":None,"max_cn":None},
                         {"type":"chr axis","height": 10.0,"unit":"Mb","margin_above":0.0}]
