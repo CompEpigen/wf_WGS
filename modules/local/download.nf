@@ -1,6 +1,6 @@
 process DOWNLOAD_DATA_DRIVE {
   publishDir("${params.data_dir}")
-  label "hmf"
+  label "utils"
   memory = 16.GB
   time = 6.h
   cpus = 1 
@@ -35,6 +35,25 @@ process DOWNLOAD_DATA_DRIVE {
     """
     gdown --folder ${drive_id} -O ${ref_version} --no-cookies
     gunzip -d ${ref_version}/${ref_version}.gtf.gz
+    """
+  stub:
+    """
+    mkdir ${ref_version}
+    """
+}
+
+process DOWNLOAD_DATA_MUTECT2 {
+  publishDir("${params.data_dir}")
+  label "utils"
+  memory = 16.GB
+  time = 6.h
+  cpus = 1 
+  
+  output:
+    path("mutect2"), emit: mutect2_dir
+  script:
+    """
+    gdown --folder ${params.mutect2_drive_id} -O mutect2 --no-cookies
     """
   stub:
     """

@@ -435,7 +435,7 @@ def reads_go_through_insertion(samfile,chr1,pos1,chr2,pos2):
             count_insertions+=1
     if count_insertions>0:
         print("Insertion count: "+ str(count_insertions))
-    return count_insertions>0
+    return count_insertions>1
 
 
 def readpair_goes_through_insertion(read,chr1,pos1,chr2,pos2,window_size=1000):

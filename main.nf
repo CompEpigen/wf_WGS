@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
-include { DOWNLOAD_DATA_DRIVE } from './modules/local/download'
+include { DOWNLOAD_DATA_DRIVE ; DOWNLOAD_DATA_MUTECT2} from './modules/local/download'
 include { INDEX_FAI; INDEX_BWA; INDEX_DICT} from './modules/local/index'
 include { MANTA_CONTROL; MANTA_NOCONTROL ; FILTER_MANTA_CONTROL; FILTER_MANTA_NOCONTROL; MERGE_MANTA_RESULTS} from './modules/local/manta'
 include { FREEC_CONTROL; FREEC_NOCONTROL ; MERGE_FREEC_RESULTS } from './modules/local/freec'
@@ -12,16 +12,17 @@ include { GRIDSS_CONTROL; GRIDSS_NOCONTROL; GRIDSS_FILTER_NOCONTROL} from './mod
 include { GRIPSS_CONTROL; GRIPSS_NOCONTROL} from './modules/local/gripss'
 include { PURPLE_CONTROL; PURPLE_NOCONTROL; PURPLE_FILTER_CONTROL; PURPLE_FILTER_NOCONTROL; MERGE_PURPLE_RESULTS} from './modules/local/purple'
 include { CREATE_TARGETS_BED; HAPLOTYPECALLER_DNA_CHR; ASE_READCOUNTER_RNA; CONCAT_HAPLOTYPECALLER_CHR; CONCAT_ASEREADCOUNTER_CHR } from './modules/local/ase'
-
+include { MUTECT2_NOCONTROL; FILTER_MUTECT2_NOCONTROL; PREPARE_PYENSEMBL } from './modules/local/mutect2'
 
 params.use_control=true
 params.run_ase=false
 params.run_HMF=false
 params.run_manta_freec = true
+params.run_mutect2 = false
 
 workflow {
 
-    if (params.reference_version=="hg19"){
+  if (params.reference_version=="hg19"){
     hmf_ref_genome_version = "V37"
   }
   else{
@@ -86,6 +87,7 @@ workflow {
     dbSNP_tbi = DOWNLOAD_DATA_DRIVE.out.dbSNP_tbi
     gtf = DOWNLOAD_DATA_DRIVE.out.gtf
     circos_dir = DOWNLOAD_DATA_DRIVE.out.circos_dir.collect()
+    
   }
   else {
     amber_loci = Channel.fromPath("${params.data_dir}/${params.reference_version}/HMF/copy_number/GermlineHetPon.vcf.gz").collect()
@@ -137,7 +139,7 @@ workflow {
 
     plot_input = freec_combined.combine(manta_combined,by:0)
     PLOT_CHR_MANTA_FREEC(plot_input)
-    PLOT_CIRCOS_MANTA_FREEC(plot_input,circos_dir)
+    PLOT_CIRCOS_MANTA_FREEC(plot_input)
     MERGE_MANTA_RESULTS(manta_combined.map{T->T[1]}.collect())
     MERGE_FREEC_RESULTS(freec_combined.map{T->T[2]}.collect())
   }
@@ -166,8 +168,8 @@ workflow {
 
     //combine control and nocontrol
     purple_output_combined = PURPLE_FILTER_CONTROL.out.mix(PURPLE_FILTER_NOCONTROL.out)
-    PLOT_CHR_HMF(purple_output_combined.out,chr_arms)
-    //PLOT_CIRCOS_HMF(purple_output_combined.out,chr_arms,circos_dir)
+    PLOT_CHR_HMF(purple_output_combined.out)
+    PLOT_CIRCOS_HMF(purple_output_combined.out)
     svs_merged = PURPLE_FILTER.out.map{T->T[2]}.collect()
     cnas_merged = PURPLE_FILTER.out.map{T->T[1]}.collect()
     MERGE_PURPLE_RESULTS(svs_merged,cnas_merged)
@@ -177,7 +179,7 @@ workflow {
 
 
   if (params.run_ASE){
-    chromosomes = Channel.fromList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X"])
+    chromosomes = Channel.fromList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X"]) // TODO: handle case with chr prefix.
     CREATE_TARGETS_BED(gtf,chromosomes)
     input_DNA_targets = input_ase.map{tuple(it[0],it[1],it[2])}.combine(CREATE_TARGETS_BED.out)
     HAPLOTYPECALLER_DNA_CHR(input_DNA_targets,ref_fa,ref_fai,ref_bwa,ref_dict,dbSNP,dbSNP_tbi)
@@ -188,6 +190,20 @@ workflow {
     CONCAT_HAPLOTYPECALLER_CHR(dna_grouped)
     CONCAT_ASEREADCOUNTER_CHR(rna_grouped)
     }
+
+  if (params.run_mutect2){
+    if (file("${params.data_dir}/mutect2").exists()==false){
+      DOWNLOAD_DATA_MUTECT2()
+      mutect2_dir = DOWNLOAD_DATA_MUTECT2.out.mutect2_dir.collect()
+    }
+    else{
+      mutect2_dir = Channel.fromPath("${params.data_dir}/mutect2").collect()
+    }
+    MUTECT2_NOCONTROL(input_nocontrol,ref_fa,ref_fai,ref_bwa,ref_dict,mutect2_dir,params.mutect2_target_intervals)
+    PREPARE_PYENSEMBL()
+    FILTER_MUTECT2_NOCONTROL(MUTECT2_NOCONTROL.out,PREPARE_PYENSEMBL.out)
+
+  }
 
 
 }

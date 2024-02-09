@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import pandas as pd
 import vcfpy
 import pycircos
@@ -98,10 +99,11 @@ for key in arcdata_dict:
 
 
 color_map={"green":"#27ae60","blue":"#4a69bd","red":"#e55039","black":"black"}
-
-df_CNV = pd.read_csv(args.cnv,sep="\t",header=None)
-df_CNV.columns=["chr","start","end","cn","type"]
-df_CNV["chr"] = [str(x) for x in df_CNV["chr"]]
+CNV_provided = (args.cnv is not None and os.stat(args.cnv).st_size != 0)
+if CNV_provided:
+    df_CNV = pd.read_csv(args.cnv,sep="\t",header=None)
+    df_CNV.columns=["chr","start","end","cn","type"]
+    df_CNV["chr"] = [str(x) for x in df_CNV["chr"]]
 
 ploidy=2
 #scatter plot
@@ -127,10 +129,13 @@ with open(args.ratios,"r") as f:
         if value<0: continue
         values_all.append(value)
         color="black"
-        for i in df_CNV.index:
-            if line[0]==df_CNV.loc[i,"chr"] and mid>=df_CNV.loc[i,"start"] and mid<=df_CNV.loc[i,"end"]:
-                if df_CNV.loc[i,"type"]=="gain": color = "#e55039"
-                else: color = "#4a69bd"
+        if CNV_provided:
+            for i in df_CNV.index:
+                if line[0]==df_CNV.loc[i,"chr"] and mid>=df_CNV.loc[i,"start"] and mid<=df_CNV.loc[i,"end"]:
+                    if df_CNV.loc[i,"type"]=="gain": color = "#e55039"
+                    else: color = "#4a69bd"
+        else:
+            color="#4a69bd"
         if name not in arcdata_dict:
             arcdata_dict[name]["positions"] = []
             arcdata_dict[name]["values"] = []

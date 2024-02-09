@@ -1,5 +1,5 @@
 process CREATE_TARGETS_BED {
-  label "ase"
+  label "gatk"
   memory = 4.GB
   time = 1.h
   cpus = 1
@@ -21,7 +21,7 @@ process CREATE_TARGETS_BED {
 
 
 process HAPLOTYPECALLER_DNA_CHR {
-  label "ase"
+  label "gatk"
   memory = 12.GB
   time = 8.h
   cpus = 10
@@ -53,7 +53,7 @@ process HAPLOTYPECALLER_DNA_CHR {
 
 
 process ASE_READCOUNTER_RNA {
-  label "ase"
+  label "gatk"
   memory = 10.GB
   time = 10.h
   cpus = 2
@@ -69,7 +69,7 @@ process ASE_READCOUNTER_RNA {
   script:
     """
     mv ${ref_fa}.dict ${ref_fa.getSimpleName()}.dict
-    gatk --java-options '-XX:ParallelGCThreads=1' ASEReadCounter -R ${ref_fa} -I ${bam_RNA} -V ${vcf} -O ${meta.sample}_${chr}.tsv -mmq 20 -mbq 20 -min-depth 6 
+    gatk --java-options '-XX:ParallelGCThreads=1' ASEReadCounter -R ${ref_fa} -I ${bam_RNA} -L ${chr} -V ${vcf} -O ${meta.sample}_${chr}.tsv -mmq 20 -mbq 20 -min-depth 6 
     """
   stub:
     """
@@ -79,7 +79,7 @@ process ASE_READCOUNTER_RNA {
 
 
 process CONCAT_HAPLOTYPECALLER_CHR {
-  label "ase"
+  label "gatk"
   publishDir "${params.outDir}/ASE/DNA", mode: 'copy'
   memory = 8.GB
   time = 1.h
@@ -100,7 +100,7 @@ process CONCAT_HAPLOTYPECALLER_CHR {
 }
 
 process CONCAT_ASEREADCOUNTER_CHR {
-  label "ase"
+  label "gatk"
   publishDir "${params.outDir}/ASE/RNA", mode: 'copy'
   memory = 8.GB
   time = 6.h
