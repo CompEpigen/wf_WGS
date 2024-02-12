@@ -34,7 +34,7 @@ for i,chr in enumerate(chromosomes):
 
 
 
-config={"general":{"reference":args.genome,"figure_layout":"horizontal"}}
+config={"general":{"reference":args.genome,"figure_layout":"circular"}}
 config["output"] = {"file":args.o,"dpi":400,"width":180.0}
 config["regions"] = regions
 config["tracks"] = [{"type":"SV","height": 10.0,"margin_above": 0.0,"bounding_box": True,"vcf":args.sv},
