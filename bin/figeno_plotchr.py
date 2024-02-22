@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import gridspec
-from figeno import make_figeno
+from figeno import figeno_make
 
 
 
@@ -36,7 +36,7 @@ for chr in chromosomes:
                              "freec_CNAs":args.freec_cnas,"purple_cn":args.purple_cn,"min_cn":None,"max_cn":None},
                             {"type":"chr axis","height": 10.0,"unit":"Mb","margin_above":0.0}]
 
-    make_figeno(config)
+    figeno_make(config)
 
 
 

@@ -9,7 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib import gridspec
-from figeno import make_figeno
+from figeno import figeno_make
 
 
 
@@ -42,7 +42,7 @@ config["tracks"] = [{"type":"SV","height": 10.0,"margin_above": 0.0,"bounding_bo
                             "freec_CNAs":args.freec_cnas,"purple_cn":args.purple_cn,"min_cn":None,"max_cn":3.9,"grid_major":False,"grid_minor":False},
                         {"type":"chr axis","height": 10.0,"unit":"Mb","margin_above":0.0}]
 
-make_figeno(config)
+figeno_make(config)
 
 
 
