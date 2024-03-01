@@ -26,7 +26,8 @@ process DOWNLOAD_DATA_DRIVE {
     path("${ref_version}/FREEC/config_template_FREEC_nocontrol.txt"), emit: freec_template_nocontrol
     path("${ref_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp"), emit: freec_gc
     path("${ref_version}/FREEC/${ref_version}.len"), emit: freec_len
-    path("${ref_version}/circos"), emit: circos_dir
+    path("${ref_version}/imprinted_genes.txt"), emit: imprinted_genes
+    path("${ref_version}/TADs.bed"), emit: tads
 
     
   script:

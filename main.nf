@@ -13,6 +13,7 @@ include { GRIPSS_CONTROL; GRIPSS_NOCONTROL} from './modules/local/gripss'
 include { PURPLE_CONTROL; PURPLE_NOCONTROL; PURPLE_FILTER_CONTROL; PURPLE_FILTER_NOCONTROL; MERGE_PURPLE_RESULTS} from './modules/local/purple'
 include { CREATE_TARGETS_BED; HAPLOTYPECALLER_DNA_CHR; ASE_READCOUNTER_RNA; CONCAT_HAPLOTYPECALLER_CHR; CONCAT_ASEREADCOUNTER_CHR } from './modules/local/ase'
 include { MUTECT2_NOCONTROL; FILTER_MUTECT2_NOCONTROL; PREPARE_PYENSEMBL } from './modules/local/mutect2'
+include { PYJACKER } from './modules/local/pyjacker' 
 
 params.use_control=true
 params.run_ase=false
@@ -86,7 +87,8 @@ workflow {
     dbSNP = DOWNLOAD_DATA_DRIVE.out.dbSNP
     dbSNP_tbi = DOWNLOAD_DATA_DRIVE.out.dbSNP_tbi
     gtf = DOWNLOAD_DATA_DRIVE.out.gtf
-    circos_dir = DOWNLOAD_DATA_DRIVE.out.circos_dir.collect()
+    imprinted_genes=DOWNLOAD_DATA_DRIVE.out.imprinted_genes
+    tads=DOWNLOAD_DATA_DRIVE.out.tads
     
   }
   else {
@@ -107,19 +109,22 @@ workflow {
     dbSNP = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz").collect()
     dbSNP_tbi = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz.tbi").collect()
     gtf = Channel.fromPath("${params.data_dir}/${params.reference_version}/${params.reference_version}.gtf").collect()
-    circos_dir = Channel.fromPath("${params.data_dir}/${params.reference_version}/circos").collect()
+    imprinted_genes = Channel.fromPath("${params.data_dir}/${params.reference_version}/imprinted_genes.txt").collect()
+    tads = Channel.fromPath("${params.data_dir}/${params.reference_version}/TADs.bed").collect()
   }
 
   input = Channel.fromPath(params.samplesheet).splitCsv(header: true, sep: ',')
 
   input_control = input.filter{it.bam_control && params.use_control}
-                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai",it.bam_control,it.bam_control+".bai")}
+                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],
+                  it.bam,it.bam+".bai",it.bam_control,it.bam_control+".bai")}
 
   input_nocontrol = input.filter{(!it.bam_control) || (!params.use_control)}
-                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai")}
+                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],it.bam,it.bam+".bai")}
   
   input_ase = input.filter{(it.bam) && (it.bam_RNA)}
-                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F"],it.bam,it.bam+".bai",it.bam_RNA,it.bam_RNA+".bai")}
+                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],
+                  it.bam,it.bam+".bai",it.bam_RNA,it.bam_RNA+".bai")}
 
   if (params.run_manta_freec){
 
@@ -202,6 +207,46 @@ workflow {
     MUTECT2_NOCONTROL(input_nocontrol,ref_fa,ref_fai,ref_bwa,ref_dict,mutect2_dir,params.mutect2_target_intervals)
     PREPARE_PYENSEMBL()
     FILTER_MUTECT2_NOCONTROL(MUTECT2_NOCONTROL.out,PREPARE_PYENSEMBL.out)
+
+  }
+
+
+
+  if (params.run_pyjacker){
+    params.fusions="$projectDir/data/NO_FILE"
+    params.enhancers="$projectDir/data/NO_FILE"
+    params.RNA_TPM_normal_samples="$projectDir/data/NO_FILE"
+
+    params.n_iterations_FDR=30
+    params.weight_expnormal=0
+    params.weight_amplification=0
+    params.weight_deletion=0
+
+    rna_tpm = Channel.fromPath("${params.RNA_TPM_file}")
+
+    // breakpoints
+    if (params.run_manta_freec){breakpoints=MERGE_MANTA_RESULTS.out}
+    else { breakpoints=Channel.fromPath("${params.breakpoints}").collect()}
+
+    // CNAs
+    if (params.run_manta_freec){CNAs=MERGE_FREEC_RESULTS.out}
+    else { CNAs =Channel.fromPath("${params.CNAs}").collect()}
+
+    // ASE
+    if (params.run_ASE){
+      ase=CONCAT_ASEREADCOUNTER_CHR.out.collect()
+      ase_dna = CONCAT_HAPLOTYPECALLER_CHR.out.collect()
+    }
+    else{
+      ase=Channel.fromPath("${params.ase_dir}/*").collect()
+      ase_dna=Channel.fromPath("${params.ase_dna_dir}/*").collect()
+    }
+
+    fusions = Channel.fromPath("${params.fusions}").collect()
+    enhancers = Channel.fromPath("${params.enhancers}").collect()
+    tpm_normal = Channel.fromPath("${params.RNA_TPM_normal_samples}").collect()
+
+    PYJACKER(rna_tpm,breakpoints,CNAs,ase,ase_dna,gtf,chr_arms,imprinted_genes,tads,fusions,enhancers,tpm_normal)
 
   }
 

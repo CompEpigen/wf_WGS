@@ -25,6 +25,7 @@ process FREEC_CONTROL {
     sed -i 's#{BAMFILE_NORMAL}#${bam_control}#g' $template_freec
     sed -i 's#{BAMFILE_TUMOR}#${bam}#g' $template_freec
     sed -i 's#{GC_content}#${gc_freec}#g' $template_freec
+    sed -i 's#{ploidy}#${meta.ploidy}#g' $template_freec
     sed -i 's#{SEX}#${freec_sex}#g' $template_freec
     freec -config $template_freec
     mv ${bam_basename}_CNVs ${meta.sample}_CNVs
@@ -59,6 +60,7 @@ process FREEC_NOCONTROL {
     sed -i 's#{outdir}#.#g'  $template_freec
     sed -i 's#{BAMFILE}#${bam}#g' $template_freec
     sed -i 's#{GC_content}#${gc_freec}#g' $template_freec
+    sed -i 's#{ploidy}#${meta.ploidy}#g' $template_freec
     sed -i 's#{SEX}#${freec_sex}#g' $template_freec
     freec -config $template_freec
     mv ${bam_basename}_CNVs ${meta.sample}_CNVs
