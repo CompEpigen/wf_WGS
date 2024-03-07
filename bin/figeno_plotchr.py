@@ -22,6 +22,7 @@ parser.add_argument('-o', type = str, help='Output basename')
 parser.add_argument('--format', type = str, default="png", help='Output format: png or svg')
 parser.add_argument('--genome', type = str,default="hg19", help='Genome version')
 parser.add_argument('--sex', type = str,default="F", help='Sex')
+parser.add_argument('--ploidy', type = float,default=2.0, help='Ploidy')
 args = parser.parse_args()
 
 
@@ -33,7 +34,7 @@ for chr in chromosomes:
     config["regions"] = [{"chr":chr}]
     config["tracks"] = [{"type":"sv","height": 10.0,"margin_above": 0.0,"bounding_box": True,"file":args.sv},
                             {"type":"copynumber","height": 30.0,"margin_above": 0.0,"bounding_box": True,"freec_ratios":args.freec_ratios,
-                             "freec_CNAs":args.freec_cnas,"purple_cn":args.purple_cn,"min_cn":None,"max_cn":None},
+                             "freec_CNAs":args.freec_cnas,"purple_cn":args.purple_cn,"ploidy":args.ploidy,"min_cn":None,"max_cn":None},
                             {"type":"chr_axis","height": 10.0,"unit":"Mb","margin_above":0.0}]
 
     figeno_make(config)

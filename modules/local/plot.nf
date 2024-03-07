@@ -28,7 +28,7 @@ process PLOT_CHR_MANTA_FREEC {
   script:
     """
     mkdir ${meta.sample}
-    figeno_plotchr.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png 
+    figeno_plotchr.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png 
     """
 }
 
@@ -44,7 +44,7 @@ process PLOT_CIRCOS_MANTA_FREEC {
     path ("${meta.sample}_circos.png")
   script:
     """
-    figeno_plotcircos.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --sex ${meta.sex} -o ${meta.sample}_circos.png
+    figeno_plotcircos.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}_circos.png
     """
 
 }

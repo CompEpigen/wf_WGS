@@ -19,15 +19,15 @@ process DOWNLOAD_DATA_DRIVE {
     path "${ref_version}/HMF/sv/repeat_mask_data.fa.gz", emit: gripss_repeat_mask
     path "${ref_version}/dbSNP/00-common_all.vcf.gz", emit: dbSNP
     path "${ref_version}/dbSNP/00-common_all.vcf.gz.tbi", emit: dbSNP_tbi
-    path "${ref_version}/${ref_version}.gtf", emit: gtf
+    path "${ref_version}/${ref_version}.gtf.gz", emit: gtf
     path "${ref_version}/chr_arms.txt", emit: chr_arms
     tuple path("${ref_version}/manta/callregions.bed.gz"), path("${ref_version}/manta/callregions.bed.gz.tbi"), emit: manta_callregions
     path("${ref_version}/FREEC/config_template_FREEC_control.txt"), emit: freec_template_control
     path("${ref_version}/FREEC/config_template_FREEC_nocontrol.txt"), emit: freec_template_nocontrol
     path("${ref_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp"), emit: freec_gc
     path("${ref_version}/FREEC/${ref_version}.len"), emit: freec_len
-    path("${ref_version}/imprinted_genes.txt"), emit: imprinted_genes
-    path("${ref_version}/TADs.bed"), emit: tads
+    path("${ref_version}/pyjacker/imprinted_genes.txt"), emit: imprinted_genes
+    path("${ref_version}/pyjacker/TADs.bed"), emit: tads
 
     
   script:
@@ -35,7 +35,6 @@ process DOWNLOAD_DATA_DRIVE {
     else {drive_id = params.hg38_drive_id}
     """
     gdown --folder ${drive_id} -O ${ref_version} --no-cookies
-    gunzip -d ${ref_version}/${ref_version}.gtf.gz
     """
   stub:
     """

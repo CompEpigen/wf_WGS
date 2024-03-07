@@ -108,9 +108,9 @@ workflow {
     chr_arms = Channel.fromPath("${params.data_dir}/${params.reference_version}/chr_arms.txt").collect()
     dbSNP = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz").collect()
     dbSNP_tbi = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz.tbi").collect()
-    gtf = Channel.fromPath("${params.data_dir}/${params.reference_version}/${params.reference_version}.gtf").collect()
-    imprinted_genes = Channel.fromPath("${params.data_dir}/${params.reference_version}/imprinted_genes.txt").collect()
-    tads = Channel.fromPath("${params.data_dir}/${params.reference_version}/TADs.bed").collect()
+    gtf = Channel.fromPath("${params.data_dir}/${params.reference_version}/${params.reference_version}.gtf.gz").collect()
+    imprinted_genes = Channel.fromPath("${params.data_dir}/${params.reference_version}/pyjacker/imprinted_genes.txt").collect()
+    tads = Channel.fromPath("${params.data_dir}/${params.reference_version}/pyjacker/TADs.bed").collect()
   }
 
   input = Channel.fromPath(params.samplesheet).splitCsv(header: true, sep: ',')
@@ -213,9 +213,9 @@ workflow {
 
 
   if (params.run_pyjacker){
-    params.fusions="$projectDir/data/NO_FILE"
-    params.enhancers="$projectDir/data/NO_FILE"
-    params.RNA_TPM_normal_samples="$projectDir/data/NO_FILE"
+    params.fusions="$projectDir/data/NO_FILE1"
+    params.enhancers="$projectDir/data/NO_FILE2"
+    params.RNA_TPM_normal_samples="$projectDir/data/NO_FILE3"
 
     params.n_iterations_FDR=30
     params.weight_expnormal=0

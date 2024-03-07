@@ -4,6 +4,7 @@
 # Arguments: gtf, chr, output file
 
 import sys
+import gzip
 
 gtf_path = sys.argv[1]
 chr = sys.argv[2]
@@ -11,13 +12,15 @@ output = sys.argv[3]
 
 # Find genes coordinates in the gtf file
 l=[]
-with open(gtf_path,"r") as infile:
-    for line in infile:
-        if line.startswith("#"): continue
-        linesplit = line.split("\t")
-        if linesplit[0].lstrip("chr") != chr: continue
-        if linesplit[2]!="gene": continue
-        l.append([int(linesplit[3]),int(linesplit[4])])
+if gtf_path.endswith(".gz") : infile = gzip.open(gtf_path,"rt")
+else: infile =open(gtf_path,"r")
+for line in infile:
+    if line.startswith("#"): continue
+    linesplit = line.split("\t")
+    if linesplit[0].lstrip("chr") != chr: continue
+    if linesplit[2]!="gene": continue
+    l.append([int(linesplit[3]),int(linesplit[4])])
+infile.close()
 
 # Sort coordinates
 l = sorted(l)
