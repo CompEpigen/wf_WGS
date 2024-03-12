@@ -226,10 +226,12 @@ workflow {
 
     // breakpoints
     if (params.run_manta_freec){breakpoints=MERGE_MANTA_RESULTS.out}
+    else if (params.run_HMF) {breakpoints=MERGE_PURPLE_RESULTS.out.SVs}
     else { breakpoints=Channel.fromPath("${params.breakpoints}").collect()}
 
     // CNAs
     if (params.run_manta_freec){CNAs=MERGE_FREEC_RESULTS.out}
+    else if (params.run_HMF) {CNAs=MERGE_PURPLE_RESULTS.out.CNAs}
     else { CNAs =Channel.fromPath("${params.CNAs}").collect()}
 
     // ASE

@@ -120,8 +120,8 @@ process MERGE_PURPLE_RESULTS {
   cpus = 1
   
   input:
-    path("SVs/*")
-    path("CNAs/*")
+    path("SVs/*"), emit: SVs
+    path("CNAs/*"), emit: CNAs
   output:
     tuple path("breakpoints.tsv"), path("CNAs.tsv")
   script:
