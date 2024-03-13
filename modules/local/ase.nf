@@ -87,7 +87,7 @@ process CONCAT_HAPLOTYPECALLER_CHR {
   input:
     tuple val(meta), val(chr), path("vcf/*.vcf.gz"), path("vcf/*.vcf.gz.tbi")
   output:
-    tuple val(meta),path("${meta.sample}.vcf.gz"),path("${meta.sample}.vcf.gz.tbi")
+    tuple path("${meta.sample}.vcf.gz"),path("${meta.sample}.vcf.gz.tbi")
   script:
     """
     bcftools concat -o ${meta.sample}.vcf.gz -O z vcf/*.vcf.gz; bcftools index -t ${meta.sample}.vcf.gz
@@ -108,7 +108,7 @@ process CONCAT_ASEREADCOUNTER_CHR {
   input:
     tuple val(meta), path("in/*")
   output:
-    tuple val(meta),path("*.tsv")
+    path("${meta.sample}.tsv")
   script:
     """
     merge_tables.py ${meta.sample}.tsv in/*.tsv
