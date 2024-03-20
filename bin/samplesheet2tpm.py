@@ -20,7 +20,7 @@ for x in df_samples.index:
                 gene_ids = [x.split(".")[0] for x in df["gene_id"]]
                 gene_names = list(df["name"])
                 firstSample=False
-            dic[sample] = list(df["TPM"])
+            dic[sample] = list(df["TPM_legacy"])
 
 
 df = pd.DataFrame(dic)
