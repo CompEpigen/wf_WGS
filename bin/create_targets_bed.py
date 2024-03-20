@@ -30,7 +30,8 @@ i=1
 while i < len(l):
     prev_start,prev_end = l[i-1]
     if l[i][0] < l[i-1][1]:
-        l[i-1] = [l[i-1][0],l[i][1]]
+        if l[i][1]>l[i-1][1]:
+            l[i-1] = [l[i-1][0],l[i][1]]
         l.remove(l[i])
     else:
         i+=1
