@@ -22,6 +22,7 @@ process DOWNLOAD_DATA_DRIVE {
     path "${ref_version}/${ref_version}.gtf.gz", emit: gtf
     path "${ref_version}/chr_arms.txt", emit: chr_arms
     tuple path("${ref_version}/manta/callregions.bed.gz"), path("${ref_version}/manta/callregions.bed.gz.tbi"), emit: manta_callregions
+    tuple path("${ref_version}/manta/callregions_chr.bed.gz"), path("${ref_version}/manta/callregions_chr.bed.gz.tbi"), emit: manta_callregions_chr
     path("${ref_version}/FREEC/config_template_FREEC_control.txt"), emit: freec_template_control
     path("${ref_version}/FREEC/config_template_FREEC_nocontrol.txt"), emit: freec_template_nocontrol
     path("${ref_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp"), emit: freec_gc

@@ -20,6 +20,8 @@ params.run_ase=false
 params.run_HMF=false
 params.run_manta_freec = true
 params.run_mutect2 = false
+params.run_pyjacker=false
+params.chr_prefix=false
 
 workflow {
 
@@ -78,7 +80,13 @@ workflow {
     gripss_pon_sgl= DOWNLOAD_DATA_DRIVE.out.gripss_pon_sgl.collect()
     gripss_pon_sv= DOWNLOAD_DATA_DRIVE.out.gripss_pon_sv.collect()
     gripss_repeat_mask = DOWNLOAD_DATA_DRIVE.out.gripss_repeat_mask.collect()
-    manta_callregions = DOWNLOAD_DATA_DRIVE.out.manta_callregions.collect()
+    if (params.chr_prefix){
+      manta_callregions = DOWNLOAD_DATA_DRIVE.out.manta_callregions_chr.collect()
+    }
+    else{
+      manta_callregions = DOWNLOAD_DATA_DRIVE.out.manta_callregions.collect()
+    }
+    
     freec_template_control = DOWNLOAD_DATA_DRIVE.out.freec_template_control.collect()
     freec_template_nocontrol = DOWNLOAD_DATA_DRIVE.out.freec_template_nocontrol.collect()
     freec_gc = DOWNLOAD_DATA_DRIVE.out.freec_gc.collect()
@@ -100,7 +108,13 @@ workflow {
     gripss_pon_sgl= Channel.fromPath("${params.data_dir}/${params.reference_version}/HMF/sv/sgl_pon.bed.gz").collect()
     gripss_pon_sv= Channel.fromPath("${params.data_dir}/${params.reference_version}/HMF/sv/sv_pon.bedpe.gz").collect()
     gripss_repeat_mask = Channel.fromPath("${params.data_dir}/${params.reference_version}/HMF/sv/repeat_mask_data.fa.gz").collect()
-    manta_callregions = Channel.of("${params.data_dir}/${params.reference_version}/manta/callregions.bed.gz","${params.data_dir}/${params.reference_version}/manta/callregions.bed.gz.tbi").collect()
+    if (params.chr_prefix){
+      manta_callregions = Channel.of("${params.data_dir}/${params.reference_version}/manta/callregions_chr.bed.gz","${params.data_dir}/${params.reference_version}/manta/callregions_chr.bed.gz.tbi").collect()
+    }
+    else{
+      manta_callregions = Channel.of("${params.data_dir}/${params.reference_version}/manta/callregions.bed.gz","${params.data_dir}/${params.reference_version}/manta/callregions.bed.gz.tbi").collect()
+    }
+    
     freec_template_control = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/config_template_FREEC_control.txt").collect()
     freec_template_nocontrol = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/config_template_FREEC_nocontrol.txt").collect()
     freec_gc = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp").collect()
@@ -184,7 +198,13 @@ workflow {
 
 
   if (params.run_ASE){
-    chromosomes = Channel.fromList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X"]) // TODO: handle case with chr prefix.
+    if (params.chr_prefix){
+      chromosomes = Channel.fromList(['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22',"chrX"])
+    }
+    else{
+      chromosomes = Channel.fromList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X"])
+    }
+     // TODO: handle case with chr prefix.
     CREATE_TARGETS_BED(gtf,chromosomes)
     input_DNA_targets = input_ase.map{tuple(it[0],it[1],it[2])}.combine(CREATE_TARGETS_BED.out)
     HAPLOTYPECALLER_DNA_CHR(input_DNA_targets,ref_fa,ref_fai,ref_bwa,ref_dict,dbSNP,dbSNP_tbi)
