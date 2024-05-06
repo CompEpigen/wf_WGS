@@ -622,6 +622,7 @@ for record in reader:
                         print("Inversion") # TODO: inverted duplication ??
                     else:
                         print("Reciprocal translocation")
+                """
                 elif orientationOutward and BorientationOutward and orientationOutward2 and BorientationOutward2 and ((abs(pos-Bpos)<=25 and abs(pos2-Bpos2)>130) or (abs(pos2-Bpos2)<=25 and abs(pos-Bpos)>130) or (not "SR" in r.calls[args.tumorindex].data)):
                     # Insertion with TSD. The duplicated part must be small, but the insertion large (otherwise we would have found a read going through the insertion.)
                     print("Small insertion with TSD ")
@@ -657,6 +658,7 @@ for record in reader:
                         continue
                 else:
                     print("Rearrangement is not clear -> keep.")
+                    """
             print("-")
 
         if filter_out_record and (args.filterSmallInsertions ==1): continue
