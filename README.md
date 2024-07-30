@@ -32,7 +32,7 @@ The pipeline will produce various results depending on which run_xxx paramters a
 - **mutect2**: somatic SNVs found by mutect2. [if run_mutect2 is true]
 
 ## Running pyjacker
-This pipeline generates pyjacker's inputs, by setting run_pyjacker to true in the config file, it can also directly run pyjacker. See nextflow_pyjacker.config for a config file already preconfigured to run pyjacker.
+This pipeline generates pyjacker's inputs. By setting run_pyjacker to true in the config file, it can also directly run pyjacker. See nextflow_pyjacker.config for a config file already preconfigured to run pyjacker.
 For this, you must:
 - provide a RNA_TPM_file. This is the gene expression matrix, where rows are genes and columns are samples (with the same names as in the samplesheet). There must be a column gene_id, and optionally a column gene_name.
 - either set run_manta_freec to true OR set run_HMF to true OR provide breakpoints and CNAs in the config file (corresponding to breakpoints.tsv and CNAs.tsv of the pipeline outputs).
