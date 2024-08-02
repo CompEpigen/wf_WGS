@@ -11,7 +11,7 @@ process PLOT_CHR_HMF {
   script:
     """
     mkdir ${meta.sample}
-    figeno_plotchr.py --purple_cn ${cna} --sv ${sv} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png 
+    figeno_plotchr.py --purple_cn ${cna} --sv ${sv} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png --genome ${params.reference_version}
     """
 }
 
@@ -28,7 +28,7 @@ process PLOT_CHR_MANTA_FREEC {
   script:
     """
     mkdir ${meta.sample}
-    figeno_plotchr.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png 
+    figeno_plotchr.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}/${meta.sample} --format png --genome ${params.reference_version}
     """
 }
 
@@ -44,7 +44,7 @@ process PLOT_CIRCOS_MANTA_FREEC {
     path ("${meta.sample}_circos.png")
   script:
     """
-    figeno_plotcircos.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}_circos.png
+    figeno_plotcircos.py --freec_ratios ${ratios} --freec_cnas ${cnv} --sv ${sv_vcf} --ploidy ${meta.ploidy} --sex ${meta.sex} -o ${meta.sample}_circos.png --genome ${params.reference_version}
     """
 
 }
@@ -56,12 +56,12 @@ process PLOT_CIRCOS_HMF {
   time = 1.h
   cpus = 8
   input:
-    tuple val(meta),path(ratios), path(cnv), path(info), path(sv_vcf)
+    tuple val(meta),path(ratios), path(cnv), path(info), path(sv_vcf), path(foldback)
   output:
     path ("${meta.sample}_circos.png")
   script:
     """
-    figeno_plotcircos.py --purple_cn ${cna} --sv ${sv_vcf} --sex ${meta.sex} -o ${meta.sample}_circos.png
+    figeno_plotcircos.py --purple_cn ${cna} --sv ${sv_vcf} --sex ${meta.sex} -o ${meta.sample}_circos.png --genome ${params.reference_version}
     """
 
 }

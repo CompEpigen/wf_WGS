@@ -20,7 +20,7 @@ process DOWNLOAD_DATA_DRIVE {
     path "${ref_version}/dbSNP/00-common_all.vcf.gz", emit: dbSNP
     path "${ref_version}/dbSNP/00-common_all.vcf.gz.tbi", emit: dbSNP_tbi
     path "${ref_version}/${ref_version}.gtf.gz", emit: gtf
-    path "${ref_version}/chr_arms.txt", emit: chr_arms
+    path "${ref_version}/cytobands.ts", emit: cytobands
     tuple path("${ref_version}/manta/callregions.bed.gz"), path("${ref_version}/manta/callregions.bed.gz.tbi"), emit: manta_callregions
     tuple path("${ref_version}/manta/callregions_chr.bed.gz"), path("${ref_version}/manta/callregions_chr.bed.gz.tbi"), emit: manta_callregions_chr
     path("${ref_version}/FREEC/config_template_FREEC_control.txt"), emit: freec_template_control

@@ -120,10 +120,11 @@ process MERGE_PURPLE_RESULTS {
   cpus = 1
   
   input:
-    path("SVs/*"), emit: SVs
-    path("CNAs/*"), emit: CNAs
+    path("SVs/*")
+    path("CNAs/*")
   output:
-    tuple path("breakpoints.tsv"), path("CNAs.tsv")
+    path("breakpoints.tsv"), emit: SVs
+    path("CNAs.tsv"), emit: CNAs
   script:
     """
     merge_breakpoints_CNAs.py SVs CNAs

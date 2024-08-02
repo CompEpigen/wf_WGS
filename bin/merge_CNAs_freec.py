@@ -9,7 +9,7 @@ import pandas as pd
 
 d_CNA={"sample":[],"chr":[],"start":[],"end":[],"cn":[]}
 for x in sorted(os.listdir(sys.argv[1])):
-    patient = x.split("_")[0]
+    patient = x.rstrip("_CNVs")
     print(x)
     if os.stat(os.path.join(os.path.join(sys.argv[1],x))).st_size==0:
         continue

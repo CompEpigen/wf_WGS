@@ -32,7 +32,7 @@ def get_breakpoint_info(record):
 d={"sample":[],"chr1":[],"pos1":[],"orientation1":[],"chr2":[],"pos2":[],"orientation2":[]}
 l=[]
 for x in sorted(os.listdir(sys.argv[1])):
-    patient = x.split("_")[0]
+    patient = x.rstrip("_SVfiltered.vcf")
     reader = vcfpy.Reader.from_path(os.path.join(sys.argv[1],x))
     for record in reader:
         d["sample"].append(patient)

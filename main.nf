@@ -5,7 +5,7 @@ include { DOWNLOAD_DATA_DRIVE ; DOWNLOAD_DATA_MUTECT2} from './modules/local/dow
 include { INDEX_FAI; INDEX_BWA; INDEX_DICT} from './modules/local/index'
 include { MANTA_CONTROL; MANTA_NOCONTROL ; FILTER_MANTA_CONTROL; FILTER_MANTA_NOCONTROL; MERGE_MANTA_RESULTS} from './modules/local/manta'
 include { FREEC_CONTROL; FREEC_NOCONTROL ; MERGE_FREEC_RESULTS } from './modules/local/freec'
-include { PLOT_CHR_HMF; PLOT_CHR_MANTA_FREEC; PLOT_CIRCOS_MANTA_FREEC } from './modules/local/plot'
+include { PLOT_CHR_HMF; PLOT_CHR_MANTA_FREEC; PLOT_CIRCOS_MANTA_FREEC; PLOT_CIRCOS_HMF} from './modules/local/plot'
 include { AMBER_CONTROL; AMBER_NOCONTROL } from './modules/local/amber'
 include { COBALT_CONTROL; COBALT_NOCONTROL } from './modules/local/cobalt'
 include { GRIDSS_CONTROL; GRIDSS_NOCONTROL; GRIDSS_FILTER_NOCONTROL} from './modules/local/gridss'
@@ -91,7 +91,7 @@ workflow {
     freec_template_nocontrol = DOWNLOAD_DATA_DRIVE.out.freec_template_nocontrol.collect()
     freec_gc = DOWNLOAD_DATA_DRIVE.out.freec_gc.collect()
     freec_len = DOWNLOAD_DATA_DRIVE.out.freec_len.collect()
-    chr_arms = DOWNLOAD_DATA_DRIVE.out.chr_arms.collect()
+    cytobands = DOWNLOAD_DATA_DRIVE.out.cytobands.collect()
     dbSNP = DOWNLOAD_DATA_DRIVE.out.dbSNP
     dbSNP_tbi = DOWNLOAD_DATA_DRIVE.out.dbSNP_tbi
     gtf = DOWNLOAD_DATA_DRIVE.out.gtf
@@ -119,7 +119,7 @@ workflow {
     freec_template_nocontrol = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/config_template_FREEC_nocontrol.txt").collect()
     freec_gc = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp").collect()
     freec_len = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/${params.reference_version}.len").collect()
-    chr_arms = Channel.fromPath("${params.data_dir}/${params.reference_version}/chr_arms.txt").collect()
+    cytobands = Channel.fromPath("${params.data_dir}/${params.reference_version}/cytobands.tsv").collect()
     dbSNP = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz").collect()
     dbSNP_tbi = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz.tbi").collect()
     gtf = Channel.fromPath("${params.data_dir}/${params.reference_version}/${params.reference_version}.gtf.gz").collect()
@@ -131,14 +131,15 @@ workflow {
 
   input_control = input.filter{it.bam_control && params.use_control}
                   .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],
-                  it.bam,it.bam+".bai",it.bam_control,it.bam_control+".bai")}
+                  it.bam,file(it.bam[0..-5]+"*.bai"),it.bam_control,file(it.bam_control[0..-5]+"*.bai"))}
 
   input_nocontrol = input.filter{(!it.bam_control) || (!params.use_control)}
-                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],it.bam,it.bam+".bai")}
+                  .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],it.bam,file(it.bam[0..-5]+"*.bai"))}
   
   input_ase = input.filter{(it.bam) && (it.bam_RNA)}
                   .map{tuple(["sample":it.sample,"sex":it.sex?it.sex:"F","ploidy":it.ploidy?it.ploidy:"2"],
-                  it.bam,it.bam+".bai",it.bam_RNA,it.bam_RNA+".bai")}
+                  it.bam,file(it.bam[0..-5]+"*.bai"),it.bam_RNA,file(it.bam_RNA[0..-5]+"*.bai"))}
+
 
   if (params.run_manta_freec){
 
@@ -167,12 +168,12 @@ workflow {
 
   if (params.run_HMF){
     //control
-    GRIDSS_CONTROL(input,ref_fa,ref_fai,ref_bwa,ref_dict,gridss_blacklist,params.gridss_config)
+    GRIDSS_CONTROL(input_control,ref_fa,ref_fai,ref_bwa,ref_dict,gridss_blacklist,params.gridss_config)
     GRIPSS_CONTROL(GRIDSS_CONTROL.out,ref_fa,ref_fai,gripss_pon_sgl, gripss_pon_sv, gripss_repeat_mask,hmf_ref_genome_version)
     AMBER_CONTROL(input_control,amber_loci,hmf_ref_genome_version)
-    COBALT_CONTROL(input,cobalt_gc,cobalt_diploidbed)
+    COBALT_CONTROL(input_control,cobalt_gc,cobalt_diploidbed)
     purple_control_input = input_control.combine(COBALT_CONTROL.out,by:0).combine(AMBER_CONTROL.out,by:0).combine(GRIPSS_CONTROL.out,by:0)
-    PURPLE_CONTROL(purple_input,ref_fa,ref_fai,ref_bwa,ref_dict,cobalt_gc,purple_ensembl,hmf_ref_genome_version)
+    PURPLE_CONTROL(purple_control_input,ref_fa,ref_fai,ref_bwa,ref_dict,cobalt_gc,purple_ensembl,hmf_ref_genome_version)
     PURPLE_FILTER_CONTROL(PURPLE_CONTROL.out.output)
 
     //nocontrol
@@ -187,10 +188,10 @@ workflow {
 
     //combine control and nocontrol
     purple_output_combined = PURPLE_FILTER_CONTROL.out.mix(PURPLE_FILTER_NOCONTROL.out)
-    PLOT_CHR_HMF(purple_output_combined.out)
-    PLOT_CIRCOS_HMF(purple_output_combined.out)
-    svs_merged = PURPLE_FILTER.out.map{T->T[2]}.collect()
-    cnas_merged = PURPLE_FILTER.out.map{T->T[1]}.collect()
+    PLOT_CHR_HMF(purple_output_combined)
+    PLOT_CIRCOS_HMF(purple_output_combined)
+    svs_merged = purple_output_combined.map{T->T[2]}.collect()
+    cnas_merged = purple_output_combined.map{T->T[1]}.collect()
     MERGE_PURPLE_RESULTS(svs_merged,cnas_merged)
 
   }
@@ -268,7 +269,7 @@ workflow {
     enhancers = Channel.fromPath("${params.enhancers}").collect()
     tpm_normal = Channel.fromPath("${params.RNA_TPM_normal_samples}").collect()
 
-    PYJACKER(rna_tpm,breakpoints,CNAs,ase,ase_dna,gtf,chr_arms,imprinted_genes,tads,fusions,enhancers,tpm_normal)
+    PYJACKER(rna_tpm,breakpoints,CNAs,ase,ase_dna,gtf,cytobands,imprinted_genes,tads,fusions,enhancers,tpm_normal)
 
   }
 

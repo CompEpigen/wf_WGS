@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-import numpy as np
-import pandas as pd
-import vcfpy
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib import gridspec
 from figeno import figeno_make
 
 

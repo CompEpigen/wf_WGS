@@ -12,7 +12,7 @@ process PYJACKER {
     path ase_rna, stageAs: "ASE/RNA/*"
     path ase_dna, stageAs: "ASE/DNA/*"
     path gtf, stageAs: "gtf.gtf.gz"
-    path chr_arms, stageAs: "chr_arms.txt"
+    path cytobands, stageAs: "cytobands.tsv"
     path imprinted_genes, stageAs: "imprinted_genes.txt"
     path tads, stageAs: "TADs.bed"
     path fusions
@@ -33,7 +33,7 @@ process PYJACKER {
     echo "ase_dir: ASE/RNA/" >>config.yaml
     echo "ase_dna_dir: ASE/DNA/" >>config.yaml
     echo "gtf: gtf.gtf.gz" >> config.yaml
-    echo "chr_arms: chr_arms.txt" >> config.yaml
+    echo "cytobands: cytobands.tsv" >> config.yaml
     echo "imprinted_genes_file: imprinted_genes.txt" >> config.yaml
     echo "TADs_file: TADs.bed" >> config.yaml
     $fusions_cmd
