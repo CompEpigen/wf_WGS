@@ -1,11 +1,49 @@
 # wf_WGS
 Nextflow workflow to process WGS data and identify somatic CNAs and SVs, with or without matched normals, starting from aligned .bam files. In order to run it, two files have to be filled in:
-- `samplesheet.csv`: must contain at least 2 columns: sample (sample name) and bam (path to the bam file). Optionally, one can also provide sex (M for male or F for female, default is F if not provided), ploidy (default: 2; only used if CNAs are called with Control-FREEC), bam_control (path to the control bam, in which case only somatic variants will be reported), and bam_rna (for allele-specific expression).
+- `samplesheet.csv`: must contain at least 2 columns: sample (sample name) and bam (path to the bam file). Optionally, one can also provide sex (M for male or F for female, default is F if not provided), ploidy (default: 2; only used if CNAs are called with Control-FREEC), bam_control (path to the control bam, in which case only somatic variants will be reported), and bam_RNA (for allele-specific expression).
 - `nextflow.config`: see "Configuration" below.
 
-The pipeline can then be run with: `./run_WGS.sh nextflow.config`.
+The pipeline can then be run with: `./run_WGS.sh nextflow.config` (the script run_WGS.sh might have to be adapted depending on your computing environment).
 
-## Configuration
+The pipeline will automatically detected the required data files. If this fails, you can manually the data files from https://drive.google.com/drive/folders/104TKSc-yaJ2VhO47wcaBr4QKF2tjm_Ug?usp=drive_link and put them in a `data` subdirectory of your project.
+
+# Subworkflows
+Different subworkflows can be run depending on what is specified in the configuration file.
+
+## CNA and SVs
+Two workflows can call copy number alterations (CNAs) and structural variants (SVs), either with only a tumor bam file, or matched tumor + normal bams.
+
+Two alternative workflows are provided:
+- [manta](https://github.com/Illumina/manta) + [ControlFreec](https://boevalab.inf.ethz.ch/FREEC/). This will be run if `run_manta_freec=true` is specified in the config file.
+- [HMF pipeline](https://github.com/hartwigmedical/hmftools). This will be run if `run_HMF=true` is specified in the config file. CNAs will be detected with amber and cobalt, SVs with GRIDSS2, and purple will be used to combine the SNV and CNA calls.
+
+Both of these workflows give similar output. manta_freec is much faster, but the HMF pipeline has the advantage of integrating SV and CNA calls. 
+
+### Outputs
+- **plots**: a directory containing circos plots as well as per-chromosome plot, generated with [figeno](https://github.com/CompEpigen/figeno).
+- **breakpoints.tsv**: a tsv file containing breakpoints for all samples analyzed. Columns: sample, chr1, pos1,orientation1, chr2, pos2, orientation2.
+- **CNAs.tsv**: a tsv file containing copy number alterations for all samples analyzed. Columns: sample, chr, start, end, cn.
+- **freec**: a directory containing per-sample CNA information produced by Control-FREEC. 3 files per sample: {sample}_CNVs (called CNAs), {sample}_ratio.txt (ratios per 10kb bin: -1 if the bin was excluded, otherwise the copy number is ploidy*ratio), {sample}_info.txt (various information for the sample, including the inferred tumor purity). [if run_manta_freec is true]
+- **manta**: a directory containing per sample SV information produced by manta. The important file is {sample}_SVfiltered.vcf, but unfiltered files are also provided and can be helpful to investigate why some SVs were filtered out. [if run_manta_freec is true]
+- **purple**: SVs and copy numbers inferred by purple. [if run_HMF is true]
+  
+## Allele-specific expression
+Two workflows can be used to detect heterozygous SNVs in a DNA bam file, and count allelic read counts for those variants in an RNA bam file. This can then be used to detect genes which are only expressed from one allele.
+- [fast_ase](https://github.com/e-sollier/fast_ase). It is the recommended method, since it is much faster. It will be run if `run_ASE=true` is specified in the config file.
+- [GATK HaplotypeCaller + ASEReadCounter](https://gatk.broadinstitute.org/hc/en-us/articles/360037428291-ASEReadCounter). This is much slower, but might give slightly more accurate results. It will be run if `run_ASE_GATK=true` is specified in the config file.
+
+## Somatic SNVs
+- Somatic SNVs can be called using [mutect2](https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2). For now, this workflow only supports the hg19 reference. If `run_mutect2=true` is specified, it will detect SNVs present in the list of regions provided in the `mutect2_target_intervals` bed file. By default, this is a list of regions corresponding to genes commonly mutated in AML, but you can also provide a different list of regions. This workflow will only use a tumor bam file (no control), so in order to select somatic variants, it will filter out SNPs present in the gnomAD database, and only select nonsynonymous variants.
+
+## pyjacker
+- if `run_pyjacker=true` is specified in the config file, pyjacker will be run to detect genes activated by enhancer hijacking in some samples of the cohort. In order to be able to run this option, you must:
+  - provide a RNA_TPM_file in the config file. This is the gene expression matrix, where rows are genes and columns are samples (with the same names as in the samplesheet). There must be a column gene_id, and optionally a column gene_name.
+  - either set run_manta_freec to true OR set run_HMF to true OR provide breakpoints and CNAs in the config file (corresponding to breakpoints.tsv and CNAs.tsv of the pipeline outputs).
+  - either set run_ASE to true OR se run_ASE_GATK to true OR provide ase_dir in the config file (corresponding to ASE/ of the pipeline outputs).
+  
+Optionally, also provide fusions and enhancers.
+
+# Configuration
 
 See `nextflow.config` the complete list of parameters that need to be provided.
 Most parameters can be left to their default values. The most important ones are:
@@ -13,32 +51,8 @@ Most parameters can be left to their default values. The most important ones are
 - **outDir**: output directory.
 - **reference_fa**: path to the fasta file of the reference genome used for alignment.
 - **reference_version**: "hg19" or "hg38". These are the only two reference versions supported by the pipeline.
-- **use_control**: whether or not to use the control samples, if they are provided.
-- **run_manta_freec**: boolean. If true, call SVs with manta and CNAs with Control-FREEC.
-- **run_HMF**: boolean. If true, call SVs and CNAs with the Hartwig Medical Foundation (HMF pipeline): SVs are called with gridss, CNAs with amber and cobalt, and SV and CNA calls are then assembled with purple. This is an alternative to run_manta_freec, but the SV calling with gridss is slower than with manta.
-- **run_ase**: boolean. If true, will run the allele-specific expression pipeline: for each sample, identify heterozygous SNPs in the WGS data (bam column of the samplesheet), and compute the allelic read counts for these SNPs in the RNA-seq data (bam_rna column in the samplesheet), for the positions covered in the RNA-seq data.
-- **run_pyjacker**: boolean. If true, will run pyjacker (see below "Running pyjacker").
-
-## Outputs
-The pipeline will produce various results depending on which run_xxx paramters are set to true in the config file:
-
-- **plots**: a directory containing circos plots as well as per-chromosome plot [if run_manta_freec or run_hmf is true]
-- **breakpoints.tsv**: a tsv file containing breakpoints for all samples analyzed. Columns: sample, chr1, pos1,orientation1, chr2, pos2, orientation2 [if run_manta_freec or run_hmf is true]
-- **CNAs.tsv**: a tsv file containing copy number alterations for all samples analyzed. Columns: sample, chr, start, end, cn [if run_manta_freec or run_hmf is true]
-- **freec**: a directory containing per-sample CNA information produced by Control-FREEC. 3 files per sample: {sample}_CNVs (called CNAs), {sample}_ratio.txt (ratios per 10kb bin: -1 if the bin was excluded, otherwise the copy number is ploidy*ratio), {sample}_info.txt (various information for the sample, including the inferred tumor purity). [if run_manta_freec is true]
-- **manta**: a directory containing per sample SV information produced by manta. The important file is {sample}_SVfiltered.vcf, but unfiltered files are also provided and can be helpful to investigate why some SVs were filtered out. [if run_manta_freec is true]
-- **ASE**: a directory containing the allele-specific expression results. ASE/DNA contains {sample}.vcf.gz for each sample, which contains the heterozygous SNPs found in the DNA. ASE/RNA contains {sample}.tsv for each sample, which contains the allelic read counts found in RNAseq, produced by GATK ASEReadcounter. [if run_ase is true]
-- **purple**: SVs and copy numbers inferred by purple. [if run_HMF is true]
-- **mutect2**: somatic SNVs found by mutect2. [if run_mutect2 is true]
-
-## Running pyjacker
-This pipeline generates pyjacker's inputs. By setting run_pyjacker to true in the config file, it can also directly run pyjacker. See nextflow_pyjacker.config for a config file already preconfigured to run pyjacker.
-For this, you must:
-- provide a RNA_TPM_file. This is the gene expression matrix, where rows are genes and columns are samples (with the same names as in the samplesheet). There must be a column gene_id, and optionally a column gene_name.
-- either set run_manta_freec to true OR set run_HMF to true OR provide breakpoints and CNAs in the config file (corresponding to breakpoints.tsv and CNAs.tsv of the pipeline outputs).
-- either set run_ase to true OR provide ase_dir and ase_dna_dir in the config file (corresponding to ASE/RNA and ASE/DNA of the pipeline outputs).
-  
-Optionally, also provide fusions and enhancers.
+- **use_control**: whether or not to use the control samples, if they are provided. This will only be used for the CNA and SV calls.
+- **run_manta_freec**, **run_HMF**, **run_ASE**, **run_ASE_GATK**, **run_mutect2**, **run_pyjacker** : booleans to specify which workflows to run (see above).
 
 
 
