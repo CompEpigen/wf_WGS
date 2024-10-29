@@ -11,16 +11,17 @@ include { COBALT_CONTROL; COBALT_NOCONTROL } from './modules/local/cobalt'
 include { GRIDSS_CONTROL; GRIDSS_NOCONTROL; GRIDSS_FILTER_NOCONTROL} from './modules/local/gridss'
 include { GRIPSS_CONTROL; GRIPSS_NOCONTROL} from './modules/local/gripss'
 include { PURPLE_CONTROL; PURPLE_NOCONTROL; PURPLE_FILTER_CONTROL; PURPLE_FILTER_NOCONTROL; MERGE_PURPLE_RESULTS} from './modules/local/purple'
-include { CREATE_TARGETS_BED; HAPLOTYPECALLER_DNA_CHR; ASE_READCOUNTER_RNA; CONCAT_HAPLOTYPECALLER_CHR; CONCAT_ASEREADCOUNTER_CHR } from './modules/local/ase'
+include { FAST_ASE; CREATE_TARGETS_BED; HAPLOTYPECALLER_DNA_CHR; ASE_READCOUNTER_RNA; CONCAT_HAPLOTYPECALLER_CHR; CONCAT_ASEREADCOUNTER_CHR } from './modules/local/ase'
 include { MUTECT2_NOCONTROL; FILTER_MUTECT2_NOCONTROL; PREPARE_PYENSEMBL } from './modules/local/mutect2'
 include { PYJACKER } from './modules/local/pyjacker' 
 
 params.use_control=true
-params.run_ase=false
+params.run_ASE=false
 params.run_HMF=false
 params.run_manta_freec = true
 params.run_mutect2 = false
 params.run_pyjacker=false
+
 params.chr_prefix=false
 
 workflow {
@@ -35,37 +36,40 @@ workflow {
 
 
   // REFERENCE
-  ref_fa = Channel.fromPath("${params.reference_fa}").collect()
-  // fai: only index it if it's not already indexed
-  if (file("${params.reference_fa}.fai").isEmpty()==false){
-    ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
-  }
-  else{
-    ref_fai = INDEX_FAI(ref_fa).collect()
-  }
+  if (params.run_HMF || params.run_HMF || params.run_ASE_GATK || params.run_mutect2){
+    ref_fa = Channel.fromPath("${params.reference_fa}").collect()
+    // fai: only index it if it's not already indexed
+    if (file("${params.reference_fa}.fai").isEmpty()==false){
+      ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
+    }
+    else{
+      ref_fai = INDEX_FAI(ref_fa).collect()
+    }
 
-  if (file("${params.reference_fa}.fai").isEmpty()==false){
-    ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
-  }
-  else{
-    ref_fai = INDEX_FAI(ref_fa).collect()
-  }
+    if (file("${params.reference_fa}.fai").isEmpty()==false){
+      ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
+    }
+    else{
+      ref_fai = INDEX_FAI(ref_fa).collect()
+    }
 
-  //bwa index: only create it if it does not already exist
-  if (file("${params.reference_fa}.amb").isEmpty()==false){
-    ref_bwa = ["${params.reference_fa}.amb","${params.reference_fa}.ann","${params.reference_fa}.bwt", \
-               "${params.reference_fa}.pac","${params.reference_fa}.sa"]
-  }
-  else{
-    ref_bwa = INDEX_BWA(ref_fa).collect()
-  }
+    //bwa index: only create it if it does not already exist
+    if (file("${params.reference_fa}.amb").isEmpty()==false){
+      ref_bwa = ["${params.reference_fa}.amb","${params.reference_fa}.ann","${params.reference_fa}.bwt", \
+                "${params.reference_fa}.pac","${params.reference_fa}.sa"]
+    }
+    else{
+      ref_bwa = INDEX_BWA(ref_fa).collect()
+    }
 
-  if (file("${params.reference_fa}.dict").isEmpty()==false){
-    ref_dict = "${params.reference_fa}.dict"
+    if (file("${params.reference_fa}.dict").isEmpty()==false){
+      ref_dict = "${params.reference_fa}.dict"
+    }
+    else{
+      ref_dict = INDEX_DICT(ref_fa).collect()
+    }
   }
-  else{
-    ref_dict = INDEX_DICT(ref_fa).collect()
-  }
+  
 
 
 
@@ -120,8 +124,8 @@ workflow {
     freec_gc = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/GC_profile_FREEC_PoN-1000G.cnp").collect()
     freec_len = Channel.fromPath("${params.data_dir}/${params.reference_version}/FREEC/${params.reference_version}.len").collect()
     cytobands = Channel.fromPath("${params.data_dir}/${params.reference_version}/cytobands.tsv").collect()
-    dbSNP = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz").collect()
-    dbSNP_tbi = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/00-common_all.vcf.gz.tbi").collect()
+    dbSNP = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/SNPs_genes_${params.reference_version}.vcf.gz").collect()
+    dbSNP_tbi = Channel.fromPath("${params.data_dir}/${params.reference_version}/dbSNP/SNPs_genes_${params.reference_version}.vcf.gz.tbi").collect()
     gtf = Channel.fromPath("${params.data_dir}/${params.reference_version}/${params.reference_version}.gtf.gz").collect()
     imprinted_genes = Channel.fromPath("${params.data_dir}/${params.reference_version}/pyjacker/imprinted_genes.txt").collect()
     tads = Channel.fromPath("${params.data_dir}/${params.reference_version}/pyjacker/TADs.bed").collect()
@@ -196,9 +200,13 @@ workflow {
 
   }
 
-
-
   if (params.run_ASE){
+    FAST_ASE(input_ase,dbSNP, dbSNP_tbi)
+  }
+
+
+
+  if (params.run_ASE_GATK){
     if (params.chr_prefix){
       chromosomes = Channel.fromList(['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22',"chrX"])
     }
@@ -215,7 +223,7 @@ workflow {
     rna_grouped = ASE_READCOUNTER_RNA.out.groupTuple(by:0, size:23)
     CONCAT_HAPLOTYPECALLER_CHR(dna_grouped)
     CONCAT_ASEREADCOUNTER_CHR(rna_grouped)
-    }
+  }
 
   if (params.run_mutect2){
     if (file("${params.data_dir}/mutect2").exists()==false){
@@ -257,19 +265,22 @@ workflow {
 
     // ASE
     if (params.run_ASE){
+      ase=FAST_ASE.out.collect()
+    }
+    else if (params.run_ASE_GATK){
       ase=CONCAT_ASEREADCOUNTER_CHR.out.collect()
-      ase_dna = CONCAT_HAPLOTYPECALLER_CHR.out.collect()
+      //ase_dna = CONCAT_HAPLOTYPECALLER_CHR.out.collect()
     }
     else{
       ase=Channel.fromPath("${params.ase_dir}/*").collect()
-      ase_dna=Channel.fromPath("${params.ase_dna_dir}/*").collect()
+      //ase_dna=Channel.fromPath("${params.ase_dna_dir}/*").collect()
     }
 
     fusions = Channel.fromPath("${params.fusions}").collect()
     enhancers = Channel.fromPath("${params.enhancers}").collect()
     tpm_normal = Channel.fromPath("${params.RNA_TPM_normal_samples}").collect()
 
-    PYJACKER(rna_tpm,breakpoints,CNAs,ase,ase_dna,gtf,cytobands,imprinted_genes,tads,fusions,enhancers,tpm_normal)
+    PYJACKER(rna_tpm,breakpoints,CNAs,ase,gtf,cytobands,imprinted_genes,tads,fusions,enhancers,tpm_normal)
 
   }
 

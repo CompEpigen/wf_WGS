@@ -9,8 +9,7 @@ process PYJACKER {
     path rna_tpm, stageAs: "RNA_TPM.tsv"
     path breakpoints, stageAs: "breakpoints.tsv"
     path CNAs, stageAs: "CNAs.tsv"
-    path ase_rna, stageAs: "ASE/RNA/*"
-    path ase_dna, stageAs: "ASE/DNA/*"
+    path ase, stageAs: "ASE/*"
     path gtf, stageAs: "gtf.gtf.gz"
     path cytobands, stageAs: "cytobands.tsv"
     path imprinted_genes, stageAs: "imprinted_genes.txt"
@@ -31,7 +30,6 @@ process PYJACKER {
     echo "breakpoints: breakpoints.tsv" >> config.yaml
     echo "CNAs: CNAs.tsv" >> config.yaml
     echo "ase_dir: ASE/RNA/" >>config.yaml
-    echo "ase_dna_dir: ASE/DNA/" >>config.yaml
     echo "gtf: gtf.gtf.gz" >> config.yaml
     echo "cytobands: cytobands.tsv" >> config.yaml
     echo "imprinted_genes_file: imprinted_genes.txt" >> config.yaml

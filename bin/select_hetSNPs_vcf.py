@@ -19,6 +19,6 @@ for record in reader:
     #print(record.calls[0])
     AD = record.calls[0].data["AD"]
     if len(AD)<2: continue
-    if ( (AD[0]+AD[1]) > 10) and ( AD[0] / (AD[0]+AD[1]) > 0.28) and (AD[0] / (AD[0]+AD[1]) < 0.72):
+    if AD[0]>5 and AD[1] > 5 and ( AD[0] / (AD[0]+AD[1]) >= 0.30) and (AD[0] / (AD[0]+AD[1]) <= 0.70):
         if len(record.REF)==1 and len(record.ALT)==1 and len(record.ALT[0].value)==1: # Only keep SNVs
             writer.write_record(record)

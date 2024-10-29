@@ -19,7 +19,7 @@ for line in infile:
     linesplit = line.split("\t")
     if linesplit[0].lstrip("chr") != chr: continue
     if linesplit[2]!="gene": continue
-    l.append([int(linesplit[3]),int(linesplit[4])])
+    l.append([int(linesplit[3])-20,int(linesplit[4])+20])
 infile.close()
 
 # Sort coordinates

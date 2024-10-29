@@ -17,10 +17,10 @@ process DOWNLOAD_DATA_DRIVE {
     path "${ref_version}/HMF/sv/sgl_pon.bed.gz", emit: gripss_pon_sgl
     path "${ref_version}/HMF/sv/sv_pon.bedpe.gz", emit: gripss_pon_sv
     path "${ref_version}/HMF/sv/repeat_mask_data.fa.gz", emit: gripss_repeat_mask
-    path "${ref_version}/dbSNP/00-common_all.vcf.gz", emit: dbSNP
-    path "${ref_version}/dbSNP/00-common_all.vcf.gz.tbi", emit: dbSNP_tbi
+    path "${ref_version}/dbSNP/SNPs_genes_${ref_version}.vcf.gz", emit: dbSNP
+    path "${ref_version}/dbSNP/SNPs_genes_${ref_version}.vcf.gz.tbi", emit: dbSNP_tbi
     path "${ref_version}/${ref_version}.gtf.gz", emit: gtf
-    path "${ref_version}/cytobands.ts", emit: cytobands
+    path "${ref_version}/cytobands.tsv", emit: cytobands
     tuple path("${ref_version}/manta/callregions.bed.gz"), path("${ref_version}/manta/callregions.bed.gz.tbi"), emit: manta_callregions
     tuple path("${ref_version}/manta/callregions_chr.bed.gz"), path("${ref_version}/manta/callregions_chr.bed.gz.tbi"), emit: manta_callregions_chr
     path("${ref_version}/FREEC/config_template_FREEC_control.txt"), emit: freec_template_control

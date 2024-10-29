@@ -1,3 +1,28 @@
+process FAST_ASE {
+  label "fast_ase"
+  publishDir "${params.outDir}/ASE/", mode: 'copy'
+  memory = 8.GB
+  time = 3.h
+  cpus = 10
+  
+  input:
+    tuple val(meta), path("DNA.bam"), path("DNA.bam.bai"), path("RNA.bam"), path("RNA.bam.bai")
+    path dbSNP
+    path dbSNP_tbi
+  output:
+    tuple val(meta), path("*.tsv")
+  script:
+    """
+    fast_ase -t 10 --dna DNA.bam --rna RNA.bam --vcf $dbSNP -o ${meta.sample}.tsv
+    """
+  stub:
+    """
+    touch ${meta.sample}.tsv
+    """
+}
+
+
+
 process CREATE_TARGETS_BED {
   label "gatk"
   memory = 4.GB
@@ -41,8 +66,8 @@ process HAPLOTYPECALLER_DNA_CHR {
     mv ${ref_fa}.dict ${ref_fa.getSimpleName()}.dict
     gatk --java-options '-Xmx4g -XX:ParallelGCThreads=1' HaplotypeCaller -L ${targets} -R ${ref_fa} -I ${bam} -O unfiltered.vcf.gz --dbsnp ${dbSNP}
 		select_hetSNPs_vcf.py -i unfiltered.vcf.gz -o ${meta.sample}_DNA_het.vcf
-		bcftools view ${meta.sample}_DNA_het.vcf -o ${meta.sample}_DNA_het.vcf.gz -O z
-    gatk IndexFeatureFile -I ${meta.sample}_DNA_het.vcf.gz
+		bcftools view ${meta.sample}_DNA_het.vcf -o ${meta.sample}_${chr}_DNA_het.vcf.gz -O z
+    gatk IndexFeatureFile -I ${meta.sample}_${chr}_DNA_het.vcf.gz
     """
   stub:
     """
@@ -80,7 +105,7 @@ process ASE_READCOUNTER_RNA {
 
 process CONCAT_HAPLOTYPECALLER_CHR {
   label "gatk"
-  publishDir "${params.outDir}/ASE/DNA", mode: 'copy'
+  publishDir "${params.outDir}/ASE_GATK/DNA", mode: 'copy'
   memory = 8.GB
   time = 1.h
   cpus = 1
@@ -90,7 +115,7 @@ process CONCAT_HAPLOTYPECALLER_CHR {
     tuple path("${meta.sample}.vcf.gz"),path("${meta.sample}.vcf.gz.tbi")
   script:
     """
-    bcftools concat -o ${meta.sample}.vcf.gz -O z vcf/*.vcf.gz; bcftools index -t ${meta.sample}.vcf.gz
+    bcftools concat -o ${meta.sample}.vcf.gz -O z \$(ls vcf/*.vcf.gz | sort -V); bcftools index -t ${meta.sample}.vcf.gz
     """
   stub:
     """
@@ -101,7 +126,7 @@ process CONCAT_HAPLOTYPECALLER_CHR {
 
 process CONCAT_ASEREADCOUNTER_CHR {
   label "gatk"
-  publishDir "${params.outDir}/ASE/RNA", mode: 'copy'
+  publishDir "${params.outDir}/ASE_GATK/RNA", mode: 'copy'
   memory = 8.GB
   time = 6.h
   cpus = 2
@@ -111,7 +136,7 @@ process CONCAT_ASEREADCOUNTER_CHR {
     path("${meta.sample}.tsv")
   script:
     """
-    merge_tables.py ${meta.sample}.tsv in/*.tsv
+    merge_tables.py ${meta.sample}.tsv \$(ls in/*.tsv | sort -V)
     """
   stub:
     """
