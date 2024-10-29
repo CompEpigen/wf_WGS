@@ -1,17 +1,17 @@
 # wf_WGS
-Nextflow workflow to process WGS data and identify somatic CNAs and SVs, with or without matched normals, starting from aligned .bam files. In order to run it, two files have to be filled in:
+Nextflow workflow to process whole genome sequencing (WGS) data, starting from aligned .bam files. In order to run it, two files have to be filled in:
 - `samplesheet.csv`: must contain at least 2 columns: sample (sample name) and bam (path to the bam file). Optionally, one can also provide sex (M for male or F for female, default is F if not provided), ploidy (default: 2; only used if CNAs are called with Control-FREEC), bam_control (path to the control bam, in which case only somatic variants will be reported), and bam_RNA (for allele-specific expression).
 - `nextflow.config`: see "Configuration" below.
 
 The pipeline can then be run with: `./run_WGS.sh nextflow.config` (the script run_WGS.sh might have to be adapted depending on your computing environment).
 
-The pipeline will automatically detected the required data files. If this fails, you can manually the data files from https://drive.google.com/drive/folders/104TKSc-yaJ2VhO47wcaBr4QKF2tjm_Ug?usp=drive_link and put them in a `data` subdirectory of your project.
+The pipeline will automatically download the required data files. If this fails, you can manually download the data files from https://drive.google.com/drive/folders/104TKSc-yaJ2VhO47wcaBr4QKF2tjm_Ug?usp=drive_link and put them in a `data` subdirectory of your project.
 
 # Subworkflows
 Different subworkflows can be run depending on what is specified in the configuration file.
 
 ## CNA and SVs
-Two workflows can call copy number alterations (CNAs) and structural variants (SVs), either with only a tumor bam file, or matched tumor + normal bams.
+Two workflows can call copy number alterations (CNAs) and structural variants (SVs), either with only a tumor bam file, or with matched tumor + normal bams.
 
 Two alternative workflows are provided:
 - [manta](https://github.com/Illumina/manta) + [ControlFreec](https://boevalab.inf.ethz.ch/FREEC/). This will be run if `run_manta_freec=true` is specified in the config file.
@@ -21,7 +21,7 @@ Both of these workflows give similar output. manta_freec is much faster, but the
 
 ### Outputs
 - **plots**: a directory containing circos plots as well as per-chromosome plot, generated with [figeno](https://github.com/CompEpigen/figeno).
-- **breakpoints.tsv**: a tsv file containing breakpoints for all samples analyzed. Columns: sample, chr1, pos1,orientation1, chr2, pos2, orientation2.
+- **breakpoints.tsv**: a tsv file containing breakpoints for all samples analyzed. Columns: sample, chr1, pos1, orientation1, chr2, pos2, orientation2.
 - **CNAs.tsv**: a tsv file containing copy number alterations for all samples analyzed. Columns: sample, chr, start, end, cn.
 - **freec**: a directory containing per-sample CNA information produced by Control-FREEC. 3 files per sample: {sample}_CNVs (called CNAs), {sample}_ratio.txt (ratios per 10kb bin: -1 if the bin was excluded, otherwise the copy number is ploidy*ratio), {sample}_info.txt (various information for the sample, including the inferred tumor purity). [if run_manta_freec is true]
 - **manta**: a directory containing per sample SV information produced by manta. The important file is {sample}_SVfiltered.vcf, but unfiltered files are also provided and can be helpful to investigate why some SVs were filtered out. [if run_manta_freec is true]
@@ -36,10 +36,10 @@ Two workflows can be used to detect heterozygous SNVs in a DNA bam file, and cou
 - Somatic SNVs can be called using [mutect2](https://gatk.broadinstitute.org/hc/en-us/articles/360037593851-Mutect2). For now, this workflow only supports the hg19 reference. If `run_mutect2=true` is specified, it will detect SNVs present in the list of regions provided in the `mutect2_target_intervals` bed file. By default, this is a list of regions corresponding to genes commonly mutated in AML, but you can also provide a different list of regions. This workflow will only use a tumor bam file (no control), so in order to select somatic variants, it will filter out SNPs present in the gnomAD database, and only select nonsynonymous variants.
 
 ## pyjacker
-- if `run_pyjacker=true` is specified in the config file, pyjacker will be run to detect genes activated by enhancer hijacking in some samples of the cohort. In order to be able to run this option, you must:
+- if `run_pyjacker=true` is specified in the config file, pyjacker will be run to detect genes activated by enhancer hijacking in some samples of the cohort. To be able to run this option, you must:
   - provide a RNA_TPM_file in the config file. This is the gene expression matrix, where rows are genes and columns are samples (with the same names as in the samplesheet). There must be a column gene_id, and optionally a column gene_name.
   - either set run_manta_freec to true OR set run_HMF to true OR provide breakpoints and CNAs in the config file (corresponding to breakpoints.tsv and CNAs.tsv of the pipeline outputs).
-  - either set run_ASE to true OR se run_ASE_GATK to true OR provide ase_dir in the config file (corresponding to ASE/ of the pipeline outputs).
+  - either set run_ASE to true OR set run_ASE_GATK to true OR provide ase_dir in the config file (corresponding to ASE/ of the pipeline outputs).
   
 Optionally, also provide fusions and enhancers.
 
