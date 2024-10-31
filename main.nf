@@ -17,8 +17,9 @@ include { PYJACKER } from './modules/local/pyjacker'
 
 params.use_control=true
 params.run_ASE=false
+params.run_ASE_GATK=false
 params.run_HMF=false
-params.run_manta_freec = true
+params.run_manta_freec = false
 params.run_mutect2 = false
 params.run_pyjacker=false
 
@@ -213,7 +214,6 @@ workflow {
     else{
       chromosomes = Channel.fromList([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,"X"])
     }
-     // TODO: handle case with chr prefix.
     CREATE_TARGETS_BED(gtf,chromosomes)
     input_DNA_targets = input_ase.map{tuple(it[0],it[1],it[2])}.combine(CREATE_TARGETS_BED.out)
     HAPLOTYPECALLER_DNA_CHR(input_DNA_targets,ref_fa,ref_fai,ref_bwa,ref_dict,dbSNP,dbSNP_tbi)
@@ -251,30 +251,27 @@ workflow {
     params.weight_amplification=0
     params.weight_deletion=0
 
-    rna_tpm = Channel.fromPath("${params.RNA_TPM_file}")
+    if (params.RNA_TPM_file){rna_tpm = Channel.fromPath("${params.RNA_TPM_file}")}
+    else {error "In order to run pyjacker, you need to provide the RNA_TPM_file parameter (which should be a file containing the RNA TPM values for all samples)."}
+    
 
     // breakpoints
     if (params.run_manta_freec){breakpoints=MERGE_MANTA_RESULTS.out}
     else if (params.run_HMF) {breakpoints=MERGE_PURPLE_RESULTS.out.SVs}
-    else { breakpoints=Channel.fromPath("${params.breakpoints}").collect()}
+    else if (params.breakpoints) { breakpoints=Channel.fromPath("${params.breakpoints}").collect()}
+    else {error "In order to run pyjacker, you need to either set run_manta_freec or run_HMF to true, or provide the breakpoints parameter (which should be a file containing the breakpoints for all samples)."}
 
     // CNAs
     if (params.run_manta_freec){CNAs=MERGE_FREEC_RESULTS.out}
     else if (params.run_HMF) {CNAs=MERGE_PURPLE_RESULTS.out.CNAs}
-    else { CNAs =Channel.fromPath("${params.CNAs}").collect()}
+    else if (params.CNAs) { CNAs =Channel.fromPath("${params.CNAs}").collect()}
+    else {error "In order to run pyjacker, you need to either set run_manta_freec or run_HMF to true, or provide the CNAs parameter (which should be a file containing the copy number alterations for all samples)."}
 
     // ASE
-    if (params.run_ASE){
-      ase=FAST_ASE.out.collect()
-    }
-    else if (params.run_ASE_GATK){
-      ase=CONCAT_ASEREADCOUNTER_CHR.out.collect()
-      //ase_dna = CONCAT_HAPLOTYPECALLER_CHR.out.collect()
-    }
-    else{
-      ase=Channel.fromPath("${params.ase_dir}/*").collect()
-      //ase_dna=Channel.fromPath("${params.ase_dna_dir}/*").collect()
-    }
+    if (params.run_ASE){ase=FAST_ASE.out.collect()}
+    else if (params.run_ASE_GATK){ase=CONCAT_ASEREADCOUNTER_CHR.out.collect() }
+    else if (params.ase_dir){ase=Channel.fromPath("${params.ase_dir}/*").collect()}
+    else {error "In order to run pyjacker, you need to either set run_ASE or run_ASE_GATK to true, or provide the ase_dir parameter (which should be a directory containing the results of run_ASE, e.g. one tsv file per sample with the allelic RNA read counts)."}
 
     fusions = Channel.fromPath("${params.fusions}").collect()
     enhancers = Channel.fromPath("${params.enhancers}").collect()

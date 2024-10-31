@@ -29,7 +29,7 @@ process PYJACKER {
     echo "RNA_TPM_file: RNA_TPM.tsv" >> config.yaml
     echo "breakpoints: breakpoints.tsv" >> config.yaml
     echo "CNAs: CNAs.tsv" >> config.yaml
-    echo "ase_dir: ASE/RNA/" >>config.yaml
+    echo "ase_dir: ASE/" >>config.yaml
     echo "gtf: gtf.gtf.gz" >> config.yaml
     echo "cytobands: cytobands.tsv" >> config.yaml
     echo "imprinted_genes_file: imprinted_genes.txt" >> config.yaml

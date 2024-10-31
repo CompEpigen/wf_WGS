@@ -10,7 +10,7 @@ process FAST_ASE {
     path dbSNP
     path dbSNP_tbi
   output:
-    tuple val(meta), path("*.tsv")
+    path("*.tsv")
   script:
     """
     fast_ase -t 10 --dna DNA.bam --rna RNA.bam --vcf $dbSNP -o ${meta.sample}.tsv
