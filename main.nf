@@ -37,7 +37,7 @@ workflow {
 
 
   // REFERENCE
-  if (params.run_HMF || params.run_HMF || params.run_ASE_GATK || params.run_mutect2){
+  if (params.run_manta_freec || params.run_HMF || params.run_ASE_GATK || params.run_mutect2){
     ref_fa = Channel.fromPath("${params.reference_fa}").collect()
     // fai: only index it if it's not already indexed
     if (file("${params.reference_fa}.fai").isEmpty()==false){

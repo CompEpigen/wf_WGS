@@ -15,7 +15,7 @@ process MUTECT2_NOCONTROL {
     tuple val(meta), path("*_annotated.vcf.gz")
   script:
     """
-    mv ${ref_fa}.dict ${ref_fa.getSimpleName()}.dict
+    mv ${ref_fa}.dict ${ref_fa.getBaseName()}.dict
     gatk --java-options '-Xmx4G' Mutect2 -R ${ref_fa} -I ${bam} --tmp-dir \$TMPDIR \
     --germline-resource ${mutect2_dir}/gnomadSNP001.vcf.gz --af-of-alleles-not-in-resource 0.0000000025 \
     --panel-of-normals ${mutect2_dir}/Mutect2-WGS-panel-b37.vcf -O unfiltered.vcf.gz -L ${mutect2_target_intervals}

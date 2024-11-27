@@ -56,7 +56,7 @@ process PLOT_CIRCOS_HMF {
   time = 1.h
   cpus = 8
   input:
-    tuple val(meta),path(ratios), path(cnv), path(info), path(sv_vcf), path(foldback)
+    tuple val(meta),path(cna), path(sv_vcf), path(foldback)
   output:
     path ("${meta.sample}_circos.png")
   script:
