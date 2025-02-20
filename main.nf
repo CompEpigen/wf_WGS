@@ -47,13 +47,6 @@ workflow {
       ref_fai = INDEX_FAI(ref_fa).collect()
     }
 
-    if (file("${params.reference_fa}.fai").isEmpty()==false){
-      ref_fai = Channel.fromPath("${params.reference_fa}.fai").collect()
-    }
-    else{
-      ref_fai = INDEX_FAI(ref_fa).collect()
-    }
-
     //bwa index: only create it if it does not already exist
     if (file("${params.reference_fa}.amb").isEmpty()==false){
       ref_bwa = ["${params.reference_fa}.amb","${params.reference_fa}.ann","${params.reference_fa}.bwt", \
