@@ -14,7 +14,7 @@ Different subworkflows can be run depending on what is specified in the configur
 Two workflows can call copy number alterations (CNAs) and structural variants (SVs), either with only a tumor bam file, or with matched tumor + normal bams.
 
 Two alternative workflows are provided:
-- [manta](https://github.com/Illumina/manta) + [ControlFreec](https://boevalab.inf.ethz.ch/FREEC/). This will be run if `run_manta_freec=true` is specified in the config file.
+- [manta](https://github.com/Illumina/manta) + [ControlFreec](https://boevalab.inf.ethz.ch/FREEC/) (recommended for most use cases). This will be run if `run_manta_freec=true` is specified in the config file.
 - [HMF pipeline](https://github.com/hartwigmedical/hmftools). This will be run if `run_HMF=true` is specified in the config file. CNAs will be detected with amber and cobalt, SVs with GRIDSS2, and purple will be used to combine the SNV and CNA calls.
 
 Both of these workflows give similar output. manta_freec is much faster, but the HMF pipeline has the advantage of integrating SV and CNA calls. 
